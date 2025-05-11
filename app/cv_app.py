@@ -5,7 +5,6 @@ from msrest.authentication import CognitiveServicesCredentials
 from PIL import Image
 import io
 
-# ✅ MUST be the first Streamlit command
 st.set_page_config(page_title="Dreamy Azure Vision", layout="centered")
 
 # Azure credentials
