@@ -1,4 +1,4 @@
-# 🖼️ Dreamy Azure Computer Vision App
+# 🖼️ Azure Computer Vision App
 
 This is a beautiful, interactive image analysis app built using **Streamlit** and **Azure Cognitive Services**.  
 It allows you to upload an image and explore what Azure's AI can "see" — from captions to objects, tags, and even text!
