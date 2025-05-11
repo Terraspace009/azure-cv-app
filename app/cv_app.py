@@ -1,9 +1,9 @@
 import streamlit as st
-import io
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
 from PIL import Image
+import io
 
 # Set page config (must be first Streamlit command)
 st.set_page_config(page_title="Azure Computer Vision", layout="centered")
@@ -13,57 +13,93 @@ subscription_key = "7VlwoGXzVBcBkzAwC6Xbzz9tpclZ0z8cq9KtTc3zP4j42FaMU4O9JQQJ99BE
 endpoint = "https://my-computervision-app.cognitiveservices.azure.com/"
 client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
 
-# App title and upload UI
-st.title("🧠 Azure Computer Vision App")
-st.write("Upload an image to get description, tags, and object detection from Azure's AI.")
+# 🌸 Page setup
+st.set_page_config(page_title="Dreamy Azure Vision", layout="centered")
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+st.markdown("""
+    <h1 style='text-align: center; color: #A78BFA;'>🖼️ Azure Computer Vision App</h1>
+    <p style='text-align: center; color: #71717A; font-size: 18px;'>
+        Upload an image and explore what Azure sees — captions, tags, objects & even text ✨
+    </p>
+    <hr style='border-top: 1px solid #ccc;'/>
+""", unsafe_allow_html=True)
+
+# 📤 Image uploader
+uploaded_file = st.file_uploader("📷 Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    # Read image bytes once, and reuse
     image_bytes = uploaded_file.read()
     image = Image.open(io.BytesIO(image_bytes))
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="🌸 Uploaded Image", use_container_width=True)
 
-    image_stream = io.BytesIO(image_bytes)
-    image_stream.seek(0)
+    with st.spinner("Analyzing image... 🧠"):
+        # Perform analysis with all features
+        analysis = client.analyze_image_in_stream(
+            io.BytesIO(image_bytes),
+            visual_features=[
+                VisualFeatureTypes.description,
+                VisualFeatureTypes.tags,
+                VisualFeatureTypes.objects
+            ]
+        )
 
-    with st.spinner("Analyzing image with Azure..."):
-        try:
-            result = client.analyze_image_in_stream(
-                image_stream,
-                visual_features=[
-                    VisualFeatureTypes.description,
-                    VisualFeatureTypes.tags,
-                    VisualFeatureTypes.objects
-                ]
-            )
-        except Exception as e:
-            st.error(f"❌ Azure API failed: {str(e)}")
+        # OCR (text detection)
+        ocr_result = client.read_in_stream(io.BytesIO(image_bytes), raw=True)
+        operation_location = ocr_result.headers["Operation-Location"]
+        operation_id = operation_location.split("/")[-1]
+        import time
+        while True:
+            result = client.get_read_result(operation_id)
+            if result.status not in ['notStarted', 'running']:
+                break
+            time.sleep(0.5)
+
+    # 🗂 Tabs for features
+    tabs = st.tabs(["📝 Description", "🏷️ Tags", "📦 Objects", "🔤 Text (OCR)"])
+
+    # Description
+    with tabs[0]:
+        st.subheader("📝 Image Description")
+        if analysis.description and analysis.description.captions:
+            for caption in analysis.description.captions:
+                st.markdown(f"**{caption.text.capitalize()}** ({caption.confidence:.2f} confidence)")
         else:
-            # Description
-            st.subheader("📝 Description:")
-            if result.description and result.description.captions:
-                for caption in result.description.captions:
-                    st.write(f"**{caption.text}** (confidence: {caption.confidence:.2f})")
-            else:
-                st.warning("No description generated.")
+            st.warning("No description found.")
 
-            # Tags
-            st.subheader("🏷️ Tags:")
-            if result.tags:
-                tags_list = [f"{tag.name} ({tag.confidence:.2f})" for tag in result.tags]
-                st.write(", ".join(tags_list))
-            else:
-                st.write("No tags found.")
+    # Tags
+    with tabs[1]:
+        st.subheader("🏷️ Tags")
+        if analysis.tags:
+            tag_text = ", ".join(f"`{tag.name}` ({tag.confidence:.2f})" for tag in analysis.tags)
+            st.markdown(tag_text)
+        else:
+            st.info("No tags detected.")
 
-            # Objects
-            st.subheader("📦 Detected Objects:")
-            if result.objects:
-                for obj in result.objects:
-                    rect = obj.rectangle
-                    st.write(f"**{obj.object_property}** at "
-                             f"({rect.x}, {rect.y}, {rect.w}, {rect.h}) — "
-                             f"confidence: {obj.confidence:.2f}")
-            else:
-                st.write("No objects detected.")
+    # Objects
+    with tabs[2]:
+        st.subheader("📦 Detected Objects")
+        if analysis.objects:
+            for obj in analysis.objects:
+                r = obj.rectangle
+                st.markdown(f"**{obj.object_property}** — ({r.x}, {r.y}, {r.w}, {r.h}) "
+                            f"– confidence: {obj.confidence:.2f}")
+        else:
+            st.info("No objects detected.")
+
+    # OCR
+    with tabs[3]:
+        st.subheader("🔤 Text (OCR)")
+        if result.status == 'succeeded':
+            for page in result.analyze_result.read_results:
+                for line in page.lines:
+                    st.markdown(f"📝 {line.text}")
+        else:
+            st.warning("No text found.")
+
+# Footer
+st.markdown("""
+    <hr style='border-top: 1px solid #eee;'/>
+    <p style='text-align: center; font-size: 14px; color: #bbb;'>
+        Built with 💜 by <a href='https://github.com/Terraspace009' target='_blank'>Aishwarya Shukla</a>
+    </p>
+""", unsafe_allow_html=True)
