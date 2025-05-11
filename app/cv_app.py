@@ -5,11 +5,9 @@ from msrest.authentication import CognitiveServicesCredentials
 from PIL import Image
 import io
 
-st.set_page_config(page_title="Dreamy Azure Vision", layout="centered")
-
 # Azure credentials
-subscription_key = "7VlwoGXzVBcBkzAwC6Xbzz9tpclZ0z8cq9KtTc3zP4j42FaMU4O9JQQJ99BEACYeBjFXJ3w3AAAFACOGQf0T"
-endpoint = "https://my-computervision-app.cognitiveservices.azure.com/"
+subscription_key = st.secrets["AZURE_CV_KEY"]
+endpoint = st.secrets["AZURE_CV_ENDPOINT"]
 client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
 
 # 🌸 Page setup
