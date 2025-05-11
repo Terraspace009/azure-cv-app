@@ -30,10 +30,3 @@ It allows you to upload an image and explore what Azure's AI can "see" — from 
 - HTML for UI styling
 
 ---
-
-### 🔧 Setup Instructions
-
-1. Clone the repo:
-```bash
-git clone https://github.com/Terraspace009/azure-cv-app.git
-cd azure-cv-app
