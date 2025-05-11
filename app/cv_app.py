@@ -5,8 +5,8 @@ from msrest.authentication import CognitiveServicesCredentials
 from PIL import Image
 import io
 
-# Set page config (must be first Streamlit command)
-st.set_page_config(page_title="Azure Computer Vision", layout="centered")
+# ✅ MUST be the first Streamlit command
+st.set_page_config(page_title="Dreamy Azure Vision", layout="centered")
 
 # Azure credentials
 subscription_key = "7VlwoGXzVBcBkzAwC6Xbzz9tpclZ0z8cq9KtTc3zP4j42FaMU4O9JQQJ99BEACYeBjFXJ3w3AAAFACOGQf0T"
